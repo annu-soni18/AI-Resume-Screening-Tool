@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import axios from 'axios'
 
 const api = axios.create({
@@ -33,6 +34,7 @@ export interface Job {
 }
 export interface Candidate {
   id: number; name: string; email: string; phone: string; filename: string;
+  file_path: string;
   match_score: number; ai_summary: string; matching_skills: string;
   missing_skills: string; green_flags: string; red_flags: string;
   years_experience: number; status: string; screening_error: string;
