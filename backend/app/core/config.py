@@ -3,7 +3,8 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    database_url: str = "sqlite:///./resume_screener.db"
+    # database_url: str = "sqlite:///./resume_screener.db"
+    database_url: str = "sqlite:////tmp/resume_screener.db"
     secret_key: str = "dev-secret-key-change-in-production"
     access_token_expire_minutes: int = 1440
 
