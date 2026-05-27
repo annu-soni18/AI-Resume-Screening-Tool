@@ -9,7 +9,7 @@ from app.core.config import get_settings
 from app.core.database import get_db
 
 settings = get_settings()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 ALGORITHM = "HS256"

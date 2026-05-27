@@ -6,8 +6,10 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./resume_screener.db"
     secret_key: str = "dev-secret-key-change-in-production"
     access_token_expire_minutes: int = 1440
-    ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "llama3"
+
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+
     upload_dir: str = "uploads"
     max_upload_size_mb: int = 10
 

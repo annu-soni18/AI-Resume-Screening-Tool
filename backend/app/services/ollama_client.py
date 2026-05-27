@@ -1,10 +1,9 @@
-import httpx
+from groq import Groq
 import json
 import re
 from app.core.config import get_settings
 
 settings = get_settings()
-
 
 SCREENING_PROMPT = """You are an expert HR recruiter and technical hiring specialist. Analyze the resume against the job description and return a JSON object.
 
@@ -21,7 +20,7 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
   "candidate_email": "<email from resume or empty string>",
   "candidate_phone": "<phone from resume or empty string>",
   "years_experience": <float, total years of relevant experience>,
-  "ai_summary": "<2-3 sentence summary of the candidate's fit for this role>",
+  "ai_summary": "<2-3 sentence summary of the candidate fit for this role>",
   "matching_skills": ["skill1", "skill2"],
   "missing_skills": ["skill1", "skill2"],
   "green_flags": ["positive signal 1", "positive signal 2"],
@@ -30,45 +29,29 @@ Return ONLY a valid JSON object with exactly these fields (no markdown, no expla
 
 Scoring guide:
 - 85-100: Exceptional fit, meets all requirements
-- 70-84: Strong fit, meets most requirements  
+- 70-84: Strong fit, meets most requirements
 - 55-69: Moderate fit, meets core requirements
 - 40-54: Partial fit, significant gaps
-- 0-39: Poor fit, major mismatches
-
-Be specific and honest. If information is missing from the resume, note it."""
+- 0-39: Poor fit, major mismatches"""
 
 
 async def screen_resume(job_description: str, resume_text: str) -> dict:
+    client = Groq(api_key=settings.groq_api_key)
+
     prompt = SCREENING_PROMPT.format(
         job_description=job_description,
         resume_text=resume_text[:6000],
     )
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
-            f"{settings.ollama_base_url}/api/generate",
-            json={
-                "model": settings.ollama_model,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "temperature": 0.1,
-                    "top_p": 0.9,
-                }
-            }
-        )
-        response.raise_for_status()
-        data = response.json()
-        raw_text = data.get("response", "")
-    
-    """Modified"""
-    print("RAW LLM OUTPUT:\n", raw_text)
-    parsed = parse_llm_response(raw_text)
+    response = client.chat.completions.create(
+        model=settings.groq_model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+        max_tokens=1000,
+    )
 
-    print("PARSED OUTPUT:\n", parsed)
-
-    # return parse_llm_response(raw_text)
-    return parsed
+    raw_text = response.choices[0].message.content
+    return parse_llm_response(raw_text)
 
 
 def parse_llm_response(raw: str) -> dict:
@@ -117,9 +100,5 @@ def sanitize_result(data: dict) -> dict:
 
 
 async def check_ollama_health() -> bool:
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{settings.ollama_base_url}/api/tags")
-            return response.status_code == 200
-    except Exception:
-        return False
+    # Groq — just verify API key is set
+    return bool(settings.groq_api_key)
